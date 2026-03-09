@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>OSINT NEXUS — Discord Deployer</title>
+<style>
+:root {
+  --bg: #030608;
+  --panel: #070c11;
+  --border-hi: #0f3650;
+  --accent: #00d4ff;
+  --green: #00ff88;
+  --red: #ff3366;
+  --yellow: #ffcc00;
+  --textlo: #3d5a6a;
+  --texthi: #e0f0ff;
+  --mono: 'Share Tech Mono', monospace;
+  --orb: 'Orbitron', monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:#b8ccd8;font-family:var(--mono);min-height:100vh;padding:20px 16px 40px;}
+.wrap{max-width:600px;margin:0 auto;}
+.logo{font-family:var(--orb);font-size:1.4rem;font-weight:900;color:var(--accent);letter-spacing:.1em;margin-bottom:4px;}
+.logo span{color:var(--green);}
+.sub{font-size:.65rem;color:var(--textlo);letter-spacing:.15em;text-transform:uppercase;margin-bottom:24px;}
+.card{background:var(--panel);border:1px solid var(--border-hi);padding:20px;margin-bottom:16px;position:relative;}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--accent);}
+.label{font-size:.6rem;color:var(--accent);letter-spacing:.18em;text-transform:uppercase;margin-bottom:8px;display:block;}
+.input{width:100%;background:#040a0f;border:1px solid var(--border-hi);color:var(--texthi);font-family:var(--mono);font-size:.8rem;padding:12px 14px;outline:none;}
+.hint{font-size:.58rem;color:var(--textlo);margin-top:6px;line-height:1.5;}
+.btn{width:100%;padding:16px;background:linear-gradient(135deg,#005a6e,#003d4a);border:1px solid var(--accent);color:var(--accent);font-family:var(--orb);font-size:.85rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;}
+.btn:disabled{opacity:.4;}
+.btn-stop{width:100%;padding:12px;background:linear-gradient(135deg,#6e0020,#4a0015);border:1px solid var(--red);color:var(--red);font-family:var(--orb);font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;margin-top:10px;display:none;}
+.progress-wrap{margin-bottom:16px;display:none;}
+.progress-label{font-size:.6rem;color:var(--textlo);letter-spacing:.15em;text-transform:uppercase;margin-bottom:6px;display:flex;justify-content:space-between;}
+.progress-bar-bg{background:#040a0f;border:1px solid var(--border-hi);height:8px;}
+.progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--green));transition:width .3s;width:0%;}
+.log-wrap{display:none;margin-bottom:16px;}
+.log-label{font-size:.6rem;color:var(--textlo);letter-spacing:.15em;text-transform:uppercase;margin-bottom:6px;}
+.log{background:#040a0f;border:1px solid var(--border-hi);height:200px;overflow-y:auto;padding:10px 12px;font-size:.65rem;line-height:1.8;}
+.log-ok{color:var(--green);}
+.log-err{color:var(--red);}
+.log-info{color:var(--accent);}
+.log-warn{color:var(--yellow);}
+.status-card{display:none;background:var(--panel);border:1px solid;padding:20px;text-align:center;margin-bottom:16px;}
+.status-card.success{border-color:var(--green);}
+.status-card.error{border-color:var(--red);}
+.status-icon{font-size:2.5rem;margin-bottom:10px;}
+.status-title{font-family:var(--orb);font-size:.9rem;letter-spacing:.1em;margin-bottom:8px;}
+.status-card.success .status-title{color:var(--green);}
+.status-card.error .status-title{color:var(--red);}
+.status-msg{font-size:.65rem;color:var(--textlo);line-height:1.7;}
+.warning-box{background:#0a0005;border:1px solid #3d0010;padding:12px 14px;margin-bottom:16px;font-size:.62rem;color:#ff6688;line-height:1.7;}
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="wrap">
+<div class="logo">OSINT<span>NEXUS</span></div>
+<div class="sub">Discord Deployer · OSINTNexus-X7K4</div>
+<div class="warning-box"><strong>⚠ SECURITY:</strong> Only paste your bot token here. Never share it in Discord or anywhere else.</div>
+<div class="card">
+<span class="label">// Bot Token</span>
+<input class="input" type="password" id="token" placeholder="Paste your bot token here..." autocomplete="off" spellcheck="false">
+<div class="hint">Copied from Discord Developer Portal. Never leaves this page.</div>
+</div>
+<div class="card">
+<span class="label">// Server ID</span>
+<input class="input" type="text" id="guildId" value="1480644284796375090" spellcheck="false">
+<div class="hint">Your OSINTNexus-X7K4 server — pre-filled.</div>
+</div>
+<button class="btn" id="deployBtn" onclick="startDeploy()">⚡ DEPLOY OSINT NEXUS TO DISCORD</button>
+<button class="btn-stop" id="stopBtn" onclick="stopDeploy()">■ STOP</button>
+<br><br>
+<div class="progress-wrap" id="progressWrap">
+<div class="progress-label"><span>DEPLOYING...</span><span id="progressPct">0%</span></div>
+<div class="progress-bar-bg"><div class="progress-bar-fill" id="progressBar"></div></div>
+</div>
+<div class="log-wrap" id="logWrap">
+<div class="log-label">// Deployment Log</div>
+<div class="log" id="log"></div>
+</div>
+<div class="status-card" id="statusCard">
+<div class="status-icon" id="statusIcon"></div>
+<div class="status-title" id="statusTitle"></div>
+<div class="status-msg" id="statusMsg"></div>
+</div>
+</div>
+<script>
+const CATS = [
+{n:"🔍 search-engines-dorking",t:"Search engines & Google dorking",tools:[
+{n:"OSINT Framework",u:"https://osintframework.com",d:"Master map of free OSINT tools"},
+{n:"DorkGPT",u:"https://www.dorkgpt.com",d:"AI Google dork generator"},
+{n:"DorkGenius",u:"https://dorkgenius.com",d:"AI dorks for Google, Bing, DuckDuckGo"},
+{n:"Google Hacking DB",u:"https://www.exploit-db.com/google-hacking-database",d:"Community dork query index"},
+{n:"Google Advanced Search",u:"https://www.google.com/advanced_search",d:"Advanced search operators"},
+{n:"Yandex",u:"https://yandex.com",d:"Excellent for reverse image and CIS data"},
+{n:"Perplexity AI",u:"https://www.perplexity.ai",d:"AI search with cited sources"},
+{n:"Wolfram Alpha",u:"https://www.wolframalpha.com",d:"Computational knowledge engine"},
+{n:"Million Short",u:"https://millionshort.com",d:"Remove top sites to find deep web content"},
+{n:"Startpage",u:"https://www.startpage.com",d:"Anonymous Google results"},
+]},
+{n:"👤 people-search",t:"People Search & Identity",tools:[
+{n:"TruePeopleSearch",u:"https://www.truepeoplesearch.com",d:"Free US people search"},
+{n:"FastPeopleSearch",u:"https://www.fastpeoplesearch.com",d:"Free reverse address lookup"},
+{n:"ThatsThem",u:"https://thatsthem.com",d:"People search with IP and email cross-ref"},
+{n:"Webmii",u:"https://webmii.com",d:"Person web visibility index"},
+{n:"PeekYou",u:"https://www.peekyou.com",d:"Social media aggregator people search"},
+{n:"411",u:"https://www.411.com",d:"US phone and address directory"},
+{n:"Whitepages",u:"https://www.whitepages.com",d:"US people phone and address"},
+{n:"Spokeo",u:"https://www.spokeo.com",d:"People aggregator — paid"},
+{n:"Pipl",u:"https://pipl.com",d:"Deep web people search — paid"},
+]},
+{n:"📡 social-media-osint",t:"Social Media OSINT",tools:[
+{n:"WhatsMyName",u:"https://whatsmyname.app",d:"Username search across 600+ platforms"},
+{n:"Sherlock",u:"https://github.com/sherlock-project/sherlock",d:"Username hunt across 400+ sites"},
+{n:"Maigret",u:"https://github.com/soxoj/maigret",d:"Username OSINT on 3000+ sites"},
+{n:"Social Searcher",u:"https://www.social-searcher.com",d:"Real-time social media monitoring"},
+{n:"Intelligence X",u:"https://intelx.io",d:"Search Telegram darkweb leaks"},
+{n:"OSINT Industries",u:"https://www.osint.industries",d:"Email to linked social accounts"},
+{n:"Botometer",u:"https://botometer.osome.iu.edu",d:"Twitter bot probability scoring"},
+{n:"Reddit Search",u:"https://camas.unddit.com",d:"Advanced Reddit search"},
+{n:"Telegram Analytics",u:"https://tgstat.com",d:"Telegram channel analytics"},
+{n:"OSINTgram",u:"https://github.com/Datalux/Osintgram",d:"Instagram OSINT tool"},
+]},
+{n:"✉️ email-intelligence",t:"Email Intelligence",tools:[
+{n:"Hunter.io",u:"https://hunter.io",d:"Find professional email addresses"},
+{n:"HaveIBeenPwned",u:"https://haveibeenpwned.com",d:"Check email in known breaches"},
+{n:"Epieos",u:"https://epieos.com",d:"Email to Google account and social profiles"},
+{n:"Holehe",u:"https://github.com/megadose/holehe",d:"Check email on 120+ websites"},
+{n:"EmailRep",u:"https://emailrep.io",d:"Email reputation scoring"},
+{n:"Email Hippo",u:"https://tools.emailhippo.com",d:"Email verification tool"},
+{n:"GHunt",u:"https://github.com/mxrch/GHunt",d:"Investigate Google accounts via email"},
+{n:"MXToolbox",u:"https://mxtoolbox.com",d:"Email headers MX records blacklist"},
+{n:"SherlockEye",u:"https://sherlockeye.io",d:"Public data linked to email"},
+{n:"h8mail",u:"https://github.com/khast3x/h8mail",d:"Breach hunting email OSINT"},
+]},
+{n:"📱 phone-intel",t:"Phone Number Intelligence",tools:[
+{n:"Truecaller",u:"https://www.truecaller.com",d:"Reverse phone name spam carrier"},
+{n:"SyncME",u:"https://sync.me",d:"Social media reverse phone lookup"},
+{n:"Free Carrier Lookup",u:"https://freecarrierlookup.com",d:"Identify carrier and line type"},
+{n:"PhoneInfoga",u:"https://github.com/sundowndev/phoneinfoga",d:"Advanced phone OSINT tool"},
+{n:"NumLookup",u:"https://www.numlookup.com",d:"Free reverse phone lookup"},
+{n:"WhoCallsMe",u:"https://whocallsme.com",d:"Crowdsourced spam call database"},
+{n:"OSINT Industries",u:"https://www.osint.industries",d:"Phone to linked social accounts"},
+]},
+{n:"🌐 domain-ip-recon",t:"Domain & IP Intelligence",tools:[
+{n:"Shodan",u:"https://www.shodan.io",d:"Internet connected device search"},
+{n:"Censys",u:"https://search.censys.io",d:"Internet asset and certificate discovery"},
+{n:"SecurityTrails",u:"https://securitytrails.com",d:"DNS history WHOIS subdomains"},
+{n:"ViewDNS",u:"https://viewdns.info",d:"Reverse IP WHOIS DNS tools"},
+{n:"DNSdumpster",u:"https://dnsdumpster.com",d:"DNS recon subdomains MX TXT"},
+{n:"VirusTotal",u:"https://www.virustotal.com",d:"Analyze URLs domains IPs files"},
+{n:"WHOIS",u:"https://whois.domaintools.com",d:"Domain registration records"},
+{n:"crt.sh",u:"https://crt.sh",d:"SSL certificate transparency logs"},
+{n:"AbuseIPDB",u:"https://www.abuseipdb.com",d:"IP abuse reports database"},
+{n:"GreyNoise",u:"https://viz.greynoise.io",d:"Internet noise vs targeted attacks"},
+{n:"Cloudflare Radar",u:"https://radar.cloudflare.com",d:"Global internet traffic patterns"},
+{n:"BuiltWith",u:"https://builtwith.com",d:"Website technology stack identifier"},
+{n:"ZoomEye",u:"https://www.zoomeye.ai",d:"Cyberspace search engine"},
+{n:"GrayhatWarfare",u:"https://grayhatwarfare.com",d:"Open S3 buckets search"},
+]},
+{n:"🖼️ image-photo-forensics",t:"Image Photo & Video Forensics",tools:[
+{n:"Google Reverse Image",u:"https://images.google.com",d:"Reverse image search"},
+{n:"TinEye",u:"https://tineye.com",d:"Reverse image with date first seen"},
+{n:"Yandex Images",u:"https://yandex.com/images",d:"Best for faces and places"},
+{n:"SunCalc",u:"https://www.suncalc.org",d:"Sun position shadow direction — verify when photo taken"},
+{n:"ShadowMap",u:"https://shademap.app",d:"Shadow direction for any location and time"},
+{n:"Forensic OSINT EXIF",u:"https://www.forensicosint.com/free-tools/image-metadata-analyzer",d:"EXIF reader GPS XMP no upload"},
+{n:"Metadata2go",u:"https://www.metadata2go.com",d:"Online EXIF metadata viewer"},
+{n:"ExifTool",u:"https://exiftool.org",d:"Industry standard metadata extraction"},
+{n:"FotoForensics",u:"https://fotoforensics.com",d:"Error level analysis authenticity"},
+{n:"GeoSpy AI",u:"https://geospy.ai",d:"AI predicts photo location"},
+{n:"Fake Image Detector",u:"https://www.fakeimagedetector.com",d:"Detect AI generated images"},
+{n:"Deepware Scanner",u:"https://scanner.deepware.ai",d:"Deepfake video detection"},
+{n:"InVID WeVerify",u:"https://weverify.eu/tools",d:"Video verification for journalists"},
+{n:"YouTube DataViewer",u:"https://citizenevidence.amnestytech.org",d:"YouTube reverse image timestamp"},
+]},
+{n:"🗺️ geolocation-geoint",t:"Geolocation & GEOINT",tools:[
+{n:"Google Earth",u:"https://earth.google.com/web",d:"3D satellite imagery"},
+{n:"Google Maps",u:"https://maps.google.com",d:"Street View satellite terrain"},
+{n:"OpenStreetMap",u:"https://www.openstreetmap.org",d:"Open source world map"},
+{n:"Zoom Earth",u:"https://zoom.earth",d:"Near real-time satellite imagery"},
+{n:"Sentinel Hub",u:"https://apps.sentinel-hub.com/eo-browser",d:"Free ESA satellite imagery"},
+{n:"Mapillary",u:"https://www.mapillary.com",d:"Crowdsourced street level imagery"},
+{n:"SunCalc",u:"https://www.suncalc.org",d:"Sun angle shadow for any place and time"},
+{n:"PeakVisor",u:"https://peakvisor.com",d:"3D mountain views location ID"},
+{n:"Overpass Turbo",u:"https://overpass-turbo.eu",d:"Query OpenStreetMap data"},
+{n:"What3Words",u:"https://what3words.com",d:"3 word precise location system"},
+]},
+{n:"✈️ flight-tracking",t:"Flight Tracking",tools:[
+{n:"FlightAware",u:"https://flightaware.com",d:"Live and historical flight tracking"},
+{n:"Flightradar24",u:"https://www.flightradar24.com",d:"Real-time ADS-B aircraft tracking"},
+{n:"ADS-B Exchange",u:"https://www.adsbexchange.com",d:"Unfiltered ADS-B no suppression"},
+{n:"RadarBox",u:"https://www.radarbox.com",d:"Live flight and registration lookup"},
+{n:"OpenSky Network",u:"https://opensky-network.org",d:"Open ADS-B data for researchers"},
+{n:"FAA Registry",u:"https://registry.faa.gov/aircraftinquiry",d:"US aircraft registration by tail number"},
+]},
+{n:"🚢 maritime-tracking",t:"Maritime & Vessel Tracking",tools:[
+{n:"MarineTraffic",u:"https://www.marinetraffic.com",d:"Real-time AIS ship tracking"},
+{n:"VesselFinder",u:"https://www.vesselfinder.com",d:"Free AIS vessel tracking"},
+{n:"ShipFinder",u:"https://shipfinder.co",d:"Real-time vessel positions"},
+{n:"MyShipTracking",u:"https://www.myshiptracking.com",d:"Free vessel and port data"},
+{n:"Equasis",u:"https://www.equasis.org",d:"Free maritime safety information"},
+]},
+{n:"🕵️ dark-web-intel",t:"Dark Web Intelligence",tools:[
+{n:"Ahmia",u:"https://ahmia.fi",d:"Tor onion search engine clearnet"},
+{n:"DarkSearch",u:"https://darksearch.io",d:"Dark web search on clearnet"},
+{n:"Intelligence X",u:"https://intelx.io",d:"Archives dark web leaks historical"},
+{n:"Dark Web Informer",u:"https://darkwebinformer.com",d:"Tracks 800+ threat actors"},
+{n:"Tor Browser",u:"https://www.torproject.org/download",d:"Required for onion access"},
+{n:"Onion.live",u:"https://onion.live",d:"Active onion site directory"},
+{n:"Ransomware Live",u:"https://ransomware.live",d:"Track ransomware groups and victims"},
+]},
+{n:"🔓 breach-leak-data",t:"Breach & Leak Data",tools:[
+{n:"HaveIBeenPwned",u:"https://haveibeenpwned.com",d:"Gold standard breach checker"},
+{n:"Intelligence X",u:"https://intelx.io",d:"Search leaked databases darkweb"},
+{n:"Dehashed",u:"https://dehashed.com",d:"Hashed and plaintext credential leaks"},
+{n:"LeakCheck",u:"https://leakcheck.io",d:"Email breach with password preview"},
+{n:"Breachdirectory",u:"https://breachdirectory.org",d:"Free breach search by email"},
+{n:"CredenShow",u:"https://credenshow.com",d:"Check compromised credentials"},
+{n:"Pastebin Dumps",u:"https://psbdmp.ws",d:"Search pastebin for leaked data"},
+]},
+{n:"🏢 business-intel",t:"Business & Corporate Intelligence",tools:[
+{n:"OpenCorporates",u:"https://opencorporates.com",d:"200M+ company database worldwide"},
+{n:"OCCRP Aleph",u:"https://aleph.occrp.org",d:"Investigative journalism database"},
+{n:"OpenSanctions",u:"https://opensanctions.org",d:"Sanctions PEP and watchlist data"},
+{n:"SEC EDGAR",u:"https://www.sec.gov/cgi-bin/browse-edgar",d:"US public company filings"},
+{n:"Companies House",u:"https://find-and-update.company-information.service.gov.uk",d:"UK company registration"},
+{n:"Offshore Leaks",u:"https://offshoreleaks.icij.org",d:"Panama and Pandora Papers"},
+{n:"Crunchbase",u:"https://www.crunchbase.com",d:"Startup funding investors executives"},
+{n:"Import Yeti",u:"https://www.importyeti.com",d:"US import export trade records"},
+]},
+{n:"🎯 threat-intelligence",t:"Threat Intelligence",tools:[
+{n:"VirusTotal",u:"https://www.virustotal.com",d:"Multi-engine file URL domain analysis"},
+{n:"MalwareBazaar",u:"https://bazaar.abuse.ch",d:"Confirmed malware samples"},
+{n:"Hybrid Analysis",u:"https://www.hybrid-analysis.com",d:"Free malware sandbox CrowdStrike"},
+{n:"MITRE ATT&CK",u:"https://attack.mitre.org",d:"Adversary tactics and techniques"},
+{n:"Malpedia",u:"https://malpedia.caad.fkie.fraunhofer.de",d:"Malware family library"},
+{n:"Cisco Talos",u:"https://talosintelligence.com",d:"IP domain threat intelligence"},
+{n:"Shadowserver",u:"https://dashboard.shadowserver.org",d:"Global cyber threat statistics"},
+{n:"Check Point Threat Map",u:"https://threatmap.checkpoint.com",d:"Live global cyber attack map"},
+]},
+{n:"₿ crypto-tracing",t:"Cryptocurrency Tracing",tools:[
+{n:"Blockchain Explorer",u:"https://www.blockchain.com/explorer",d:"Bitcoin transaction explorer"},
+{n:"Etherscan",u:"https://etherscan.io",d:"Ethereum blockchain explorer"},
+{n:"Blockchair",u:"https://blockchair.com",d:"Multi-chain blockchain explorer"},
+{n:"Breadcrumbs",u:"https://www.breadcrumbs.app",d:"Visualize crypto wallet graphs"},
+{n:"OXT.me",u:"https://oxt.me",d:"Bitcoin transaction graph analysis"},
+{n:"Arkham Intel",u:"https://platform.arkhamintelligence.com",d:"Entity labeled blockchain intel"},
+]},
+{n:"📄 document-metadata",t:"Document & Metadata Forensics",tools:[
+{n:"ExifTool",u:"https://exiftool.org",d:"Extract metadata from any file"},
+{n:"Metadata2go",u:"https://www.metadata2go.com",d:"Browser metadata viewer"},
+{n:"FOCA",u:"https://github.com/ElevenPaths/FOCA",d:"Document metadata fingerprinting"},
+{n:"DocumentCloud",u:"https://www.documentcloud.org",d:"Analyze annotate search documents"},
+{n:"RECAP Archive",u:"https://www.courtlistener.com/recap",d:"US PACER federal court documents"},
+{n:"PDF Examiner",u:"https://www.pdfexaminer.com",d:"Analyze PDFs for metadata"},
+]},
+{n:"📦 web-archives",t:"Web Archives",tools:[
+{n:"Wayback Machine",u:"https://web.archive.org",d:"Website snapshots across time"},
+{n:"Archive.ph",u:"https://archive.ph",d:"Save and access webpage snapshots"},
+{n:"CachedView",u:"https://cachedview.nl",d:"Google Bing Archive cached pages"},
+{n:"CommonCrawl",u:"https://commoncrawl.org",d:"Web crawl data since 2008"},
+]},
+{n:"⚖️ government-legal",t:"Government & Legal Records",tools:[
+{n:"PACER",u:"https://pacer.uscourts.gov",d:"US federal court records"},
+{n:"CourtListener",u:"https://www.courtlistener.com",d:"Free legal research and filings"},
+{n:"FOIA.gov",u:"https://www.foia.gov",d:"Submit FOIA requests to US agencies"},
+{n:"MuckRock",u:"https://www.muckrock.com",d:"File and track FOIA requests"},
+{n:"OpenSecrets",u:"https://www.opensecrets.org",d:"Campaign finance lobbying data"},
+{n:"USASpending",u:"https://www.usaspending.gov",d:"US federal contract spending"},
+{n:"FAA Registry",u:"https://registry.faa.gov/aircraftinquiry",d:"US aircraft registration lookup"},
+]},
+{n:"🧰 osint-frameworks",t:"OSINT Platforms & Frameworks",tools:[
+{n:"OSINT Framework",u:"https://osintframework.com",d:"Master directory of all OSINT tools"},
+{n:"Maltego",u:"https://www.maltego.com",d:"Visual link analysis platform"},
+{n:"Spiderfoot",u:"https://www.spiderfoot.net",d:"Automated OSINT 200+ sources"},
+{n:"OSINT Combine",u:"https://www.osintcombine.com/tools",d:"Browser based OSINT utilities"},
+{n:"IntelTechniques",u:"https://inteltechniques.com/tools",d:"Michael Bazzell OSINT aggregators"},
+{n:"OSINT.SH",u:"https://osint.sh",d:"Subdomain email reverse IP tools"},
+{n:"Trace Labs",u:"https://www.tracelabs.org",d:"Crowdsourced OSINT missing persons"},
+{n:"Hunchly",u:"https://www.hunch.ly",d:"Web page capture evidence preservation"},
+let stopped = false;
+function log(msg,type='info'){const l=document.getElementById('log');const d=document.createElement('div');d.className=`log-${type}`;const t=new Date().toLocaleTimeString();d.textContent=`[${t}] ${msg}`;l.appendChild(d);l.scrollTop=l.scrollHeight;}
+function setProgress(p){document.getElementById('progressBar').style.width=p+'%';document.getElementById('progressPct').textContent=Math.round(p)+'%';}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+async function apiCall(token,endpoint,method='GET',body=null){const opts={method,headers:{'Authorization':`Bot ${token}`,'Content-Type':'application/json'}};if(body)opts.body=JSON.stringify(body);const res=await fetch(`https://discord.com/api/v10${endpoint}`,opts);if(res.status===429){const d=await res.json();const w=(d.retry_after||1)*1000+200;log(`Rate limited — waiting ${Math.round(w/1000)}s...`,'warn');await sleep(w);return apiCall(token,endpoint,method,body);}return res;}
+async function startDeploy(){
+const token=document.getElementById('token').value.trim();
+const guildId=document.getElementById('guildId').value.trim();
+if(!token){alert('Please paste your bot token first.');return;}
+stopped=false;
+document.getElementById('deployBtn').disabled=true;
+document.getElementById('stopBtn').style.display='block';
+document.getElementById('progressWrap').style.display='block';
+document.getElementById('logWrap').style.display='block';
+document.getElementById('statusCard').style.display='none';
+log('Starting OSINT NEXUS deployment...','info');
+try{
+const meRes=await apiCall(token,'/users/@me');
+if(!meRes.ok)throw new Error('Invalid bot token. Please check and try again.');
+const me=await meRes.json();
+log(`✓ Bot verified: ${me.username}`,'ok');
+await sleep(500);
+const total=CATS.length;
+for(let i=0;i<total;i++){
+if(stopped){log('Stopped.','warn');break;}
+const cat=CATS[i];
+setProgress((i/total)*90);
+log(`Creating channel: ${cat.n}`,'info');
+const cr=await apiCall(token,`/guilds/${guildId}/channels`,'POST',{name:cat.n,type:0,topic:cat.t});
+if(!cr.ok){log(`✗ Failed: ${cat.n}`,'err');await sleep(1000);continue;}
+const ch=await cr.json();
+log(`✓ Created: #${cat.n}`,'ok');
+await sleep(800);
+await apiCall(token,`/channels/${ch.id}/messages`,'POST',{content:`**${cat.t}**\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n*For authorized research and educational use only*\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`});
+await sleep(600);
+let batch=[];
+for(let t=0;t<cat.tools.length;t++){
+const tool=cat.tools[t];
+batch.push(`**${tool.n}**\n${tool.d}\n🔗 ${tool.u}`);
+if(batch.length===5||t===cat.tools.length-1){
+if(stopped)break;
+await apiCall(token,`/channels/${ch.id}/messages`,'POST',{content:batch.join('\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n')});
+batch=[];
+await sleep(800);
+}}
+log(`✓ Done: ${cat.n}`,'ok');
+await sleep(500);
+}
+if(!stopped){
+setProgress(100);
+log('✅ DEPLOYMENT COMPLETE!','ok');
+showStatus('success','✅','DEPLOYMENT COMPLETE',`All ${CATS.length} channels created with 240+ tools. Open Discord!`);
+}
+}catch(err){
+log(`ERROR: ${err.message}`,'err');
+showStatus('error','❌','FAILED',`${err.message} — Check token and that bot is in your server.`);
+}
+document.getElementById('deployBtn').disabled=false;
+document.getElementById('stopBtn').style.display='none';
+}
+function stopDeploy(){stopped=true;document.getElementById('stopBtn').style.display='none';document.getElementById('deployBtn').disabled=false;}
+function showStatus(type,icon,title,msg){const c=document.getElementById('statusCard');c.className=`status-card ${type}`;c.style.display='block';document.getElementById('statusIcon').textContent=icon;document.getElementById('statusTitle').textContent=title;document.getElementById('statusMsg').textContent=msg;}
+</script>
+</body>
+</html>
